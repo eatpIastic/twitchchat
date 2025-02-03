@@ -11,6 +11,7 @@ const data = new PogObject("twitchchat", {
   "x": 20,
   "y": 20,
   "toggled": false,
+  "stayConnected": false,
   "scale": 1,
   "msgCap": 8
 }, "data.json");
@@ -45,9 +46,13 @@ register("command", (...args) => {
       break;
     case "connect":
     case "open":
+      data.stayConnected = true;
+      data.save();
       ws.connect();
       break;
     case "close":
+      data.stayConnected = false;
+      data.save();
       ws.close();
       break;
     case "channel":
@@ -93,7 +98,7 @@ const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
 
 ws.onOpen = () => {
-  ChatLib.chat("&7open");
+  // ChatLib.chat("&7open");
   console.log("ws connection opened");
 
   ws.send(`PASS ${data.oauth}`);
@@ -156,7 +161,12 @@ const createWrappedString = (str) => {
 
 
 ws.onClose = () => {
-  ChatLib.chat("&7closed");
+  if (data.stayConnected) {
+    ws.reconnect();
+    console.log("ws reconnected")
+    return;
+  }
+  // ChatLib.chat("&7closed");
   console.log("ws connection closed");
 }
 
